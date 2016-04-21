@@ -1,6 +1,5 @@
 language: python
 python:
   - "2.7"
-
 install: pip install -r src/python/requirements.txt
 script: cd src/python/ && python -m unittest discover dart/test/ "test_*.py"
