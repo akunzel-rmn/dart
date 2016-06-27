@@ -9,25 +9,44 @@ import re
 import zlib
 
 from datetime import datetime
-from dart.model.dataset import DataType, Column, Dataset, DatasetData, DataFormat, FileFormat, RowFormat, LoadType
-from s3 import get_bucket_name, get_key_name
+from dart.model.dataset import Column
+from dart.model.dataset import DataFormat
+from dart.model.dataset import Dataset
+from dart.model.dataset import DatasetData
+from dart.model.dataset import DataType
+from dart.model.dataset import FileFormat
+from dart.model.dataset import LoadType
+from dart.model.dataset import RowFormat
+from dart.util.s3 import get_bucket_name
+from dart.util.s3 import get_key_name
 
 
-def infer_dataset_data(s3_path, max_lines):
-    """
+def infer_dataset_data(s3_path, max_lines=1000):
+    """Fetches Dataset guess for a given s3_path
+
+    Retrieves the best guesses for each column found in ta delimited file in s3. Max lines is set
+    to 1000 lines by default. This means infer_dataset_data will analyze a maximum of 1000 lines
+    in order to venture it's guesses. The function also accepts s3 prefixes along with specfic
+    s3_paths. In case of an s3 prefix, the function returns the first key returned by the boto3
+    call list_objects(). Documentation about that here: http://boto3.readthedocs.io/en/latest/
+    reference/services/s3.html#S3.Client.list_objects
+
     :type s3_path: str
-    :param s3_path: The full s3 path to a sample delimited dataset
-        file.
+    :param s3_path: The full s3 path to a sample delimited dataset file
 
     :type max_lines: int
-    :param max_lines: The maximum number of lines to peek.
+    :param max_lines: The maximum number of lines to peek
+
+    :rtype dart.model.dataset.Dataset
+    :return The Dataset object with best Column value/header guesses
     """
     guesses, has_header, compression = get_guesses(s3_path, max_lines)
     columns = columns_with_best_guess(guesses, has_header)
     location = guess_location(s3_path)
     return Dataset(data=DatasetData(name='guessed_dataset',
                                     table_name='public',
-                                    data_format=DataFormat(file_format=FileFormat.TEXTFILE, row_format=RowFormat.DELIMITED),
+                                    data_format=DataFormat(file_format=FileFormat.TEXTFILE,
+                                                           row_format=RowFormat.DELIMITED),
                                     location=location,
                                     columns=columns,
                                     compression=compression,
@@ -35,15 +54,18 @@ def infer_dataset_data(s3_path, max_lines):
 
 
 def guess_location(s3_path):
-    """
+    """Guesses a location for the dataset from s3_path
+
     :type s3_path: str
-    :param s3_path: The full s3 path to a sample delimited dataset
-        file.
+    :param s3_path: The full s3 path to a sample delimited dataset file
+
+    :rtype str
+    :return guessed location path
     """
     return os.path.dirname(s3_path)
 
 
-def get_guesses(s3_path, max_lines=1000):
+def get_guesses(s3_path, max_lines):
     """
     :type s3_path: str
     :param s3_path: The full s3 path to a sample delimited dataset
@@ -55,8 +77,10 @@ def get_guesses(s3_path, max_lines=1000):
     chunk_size = 1024
     bucket = get_bucket_name(s3_path)
     client = boto3.client('s3')
-    # Dart assumes s3_path could be a prefix. If so, Dart will get the first key object in the given prefix
-    key = client.list_objects(Bucket=bucket, MaxKeys=1, Prefix=get_key_name(s3_path))['Contents'][0]['Key']
+    # If s3_path is a prefix, Dart will get the first key object in the given prefix
+    key = client.list_objects(Bucket=bucket,
+                              MaxKeys=1,
+                              Prefix=get_key_name(s3_path))['Contents'][0]['Key']
     stream = client.get_object(Bucket=bucket, Key=key)['Body']
     # Read the first chunk of the file stream
     preview = stream.read(chunk_size)
@@ -85,7 +109,7 @@ def get_ascii_guesses(preview, stream, chunk_size, max_lines):
     :type max_lines: int
     :param max_lines: Maximum number of lines to peek into.
     """
-    COMPRESSION_TYPE = 'NONE'
+    compression_type = 'NONE'
     guesses = dict()
     dialect = csv.Sniffer().sniff(preview)
     has_header = csv.Sniffer().has_header(preview)
@@ -102,11 +126,17 @@ def get_ascii_guesses(preview, stream, chunk_size, max_lines):
             break
         data += chunk
         if '\n' in data:
-            guesses, data, lines_read, lines_read = analyze_data(data, lines_read, max_lines, first_row, guesses,dialect, has_header)
+            guesses, data, lines_read, lines_read = analyze_data(data=data,
+                                                                 lines_read=lines_read,
+                                                                 max_lines=max_lines,
+                                                                 first_row=first_row,
+                                                                 guesses=guesses,
+                                                                 dialect=dialect,
+                                                                 has_header=has_header)
             first_row = False
             if lines_read >= max_lines:
-                return guesses, has_header, COMPRESSION_TYPE
-    return guesses, has_header, COMPRESSION_TYPE
+                return guesses, has_header, compression_type
+    return guesses, has_header, compression_type
 
 
 def get_gzip_guesses(preview, stream, chunk_size, max_lines):
@@ -124,11 +154,11 @@ def get_gzip_guesses(preview, stream, chunk_size, max_lines):
     :type max_lines: int
     :param max_lines: Maximum number of lines to peek into.
     """
-    COMPRESSION_TYPE = 'GZIP'
+    compression_type = 'GZIP'
     guesses = dict()
     dialect = csv.Sniffer().sniff(zlib.decompressobj(zlib.MAX_WBITS|16).decompress(preview))
     has_header = csv.Sniffer().has_header(zlib.decompressobj(zlib.MAX_WBITS|16).decompress(preview))
-    d = zlib.decompressobj(zlib.MAX_WBITS|16)
+    decompressor_object = zlib.decompressobj(zlib.MAX_WBITS|16)
     lines_read = 0
     first_row = True
     data = ''
@@ -140,13 +170,19 @@ def get_gzip_guesses(preview, stream, chunk_size, max_lines):
             chunk = stream.read(chunk_size)
         if not chunk:
             break
-        data += d.decompress(chunk)
+        data += decompressor_object.decompress(chunk)
         if '\n' in data:
-            guesses, data, lines_read = analyze_data(data, lines_read, max_lines, first_row, guesses,dialect, has_header)
+            guesses, data, lines_read = analyze_data(data=data,
+                                                     lines_read=lines_read,
+                                                     max_lines=max_lines,
+                                                     first_row=first_row,
+                                                     guesses=guesses,
+                                                     dialect=dialect,
+                                                     has_header=has_header)
             first_row = False
             if lines_read >= max_lines:
-                return guesses, has_header, COMPRESSION_TYPE
-    return guesses, has_header, COMPRESSION_TYPE
+                return guesses, has_header, compression_type
+    return guesses, has_header, compression_type
 
 
 def get_bzip_guesses(preview, stream, chunk_size, max_lines):
@@ -164,7 +200,7 @@ def get_bzip_guesses(preview, stream, chunk_size, max_lines):
     :type max_lines: int
     :param max_lines: Maximum number of lines to peek into.
     """
-    COMPRESSION_TYPE = 'BZ2'
+    compression_type = 'BZ2'
     guesses = dict()
     dialect = csv.Sniffer().sniff(bz2.BZ2Decompressor().decompress(preview))
     has_header = csv.Sniffer().has_header(bz2.BZ2Decompressor().decompress(preview))
@@ -181,11 +217,17 @@ def get_bzip_guesses(preview, stream, chunk_size, max_lines):
             break
         data += bz2.BZ2Decompressor().decompress(chunk)
         if '\n' in data:
-            guesses, data, lines_read = analyze_data(data, lines_read, max_lines, first_row, guesses, dialect, has_header)
+            guesses, data, lines_read = analyze_data(data=data,
+                                                     lines_read=lines_read,
+                                                     max_lines=max_lines,
+                                                     first_row=first_row,
+                                                     guesses=guesses,
+                                                     dialect=dialect,
+                                                     has_header=has_header)
             first_row = False
             if lines_read >= max_lines:
-                return guesses, has_header, COMPRESSION_TYPE
-    return guesses, has_header, COMPRESSION_TYPE
+                return guesses, has_header, compression_type
+    return guesses, has_header, compression_type
 
 
 def analyze_data(data, lines_read, max_lines, first_row, guesses, dialect, has_header):
@@ -296,7 +338,8 @@ def guess_data_type(value):
             elif -9223372036854775808 <= retval <= 9223372036854775807:
                 return DataType.BIGINT
         else:
-            if -3.4 * math.pow(10,38) <= value <= -1.18 * math.pow(10,-38) or 1.18 * math.pow(10,-38) <= value <= 3.4 * math.pow(10,38):
+            if -3.4 * math.pow(10, 38) <= value <= -1.18 * math.pow(10, -38) or \
+                    1.18 * math.pow(10, -38) <= value <= 3.4 * math.pow(10, 38):
                 return DataType.FLOAT
             else:
                 return DataType.NUMERIC
@@ -307,8 +350,8 @@ def guess_data_type(value):
                 return DataType.BOOLEAN
             else:
                 try:
-                    time = dateutil.parser(value)
-                    if datetime(1970,1,1,0,0,1) <= time <= datetime(2038,1,19,3,14,7):
+                    time = dateutil.parser.parse(value)
+                    if datetime(1970, 1, 1, 0, 0, 1) <= time <= datetime(2038, 1, 19, 3, 14, 7):
                         return DataType.TIMESTAMP
                     else:
                         return DataType.DATETIME

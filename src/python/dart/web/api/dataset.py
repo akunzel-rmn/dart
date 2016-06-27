@@ -72,3 +72,4 @@ def filter_service():
 def dataset_service():
     """ :rtype: dart.service.dataset.DatasetService """
     return current_app.dart_context.get(DatasetService)
+
