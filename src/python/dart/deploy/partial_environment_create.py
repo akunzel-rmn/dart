@@ -21,6 +21,7 @@ from dart.engine.redshift.add_engine import add_redshift_engine
 from dart.engine.s3.add_engine import add_s3_engine
 from dart.service.secrets import Secrets
 from dart.model.exception import DartRequestException
+from dart.util.config import _get_element, _get_dart_host
 from retrying import retry
 
 from dart.util.s3 import get_bucket_name, get_key_name
@@ -47,7 +48,7 @@ class PartialEnvironmentCreateTool(DeploymentTool):
     def run(self):
         _logger.info('reading configuration...')
         output_config = copy.deepcopy(configuration(self.input_config_path, suppress_decryption=True))
-        dart_host = self._get_dart_host(output_config)
+        dart_host = _get_dart_host(output_config)
         _logger.info('setting up new dart partial environment: %s' % dart_host)
         self.create_partial(output_config)
         _logger.info('partial environment created with config: %s, url: %s' % (self.output_config_s3_path, dart_host))
@@ -56,8 +57,8 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         _logger.info('updating configuration with trigger queue urls/arns')
         trigger_queue_arn, trigger_queue_url = self._ensure_queue_exists(output_config, 'trigger_queue')
         events_params = output_config['cloudformation_stacks']['events']['boto_args']['Parameters']
-        self._get_element(events_params, 'ParameterKey', 'TriggerQueueUrl')['ParameterValue'] = trigger_queue_url
-        self._get_element(events_params, 'ParameterKey', 'TriggerQueueArn')['ParameterValue'] = trigger_queue_arn
+        _get_element(events_params, 'ParameterKey', 'TriggerQueueUrl')['ParameterValue'] = trigger_queue_url
+        _get_element(events_params, 'ParameterKey', 'TriggerQueueArn')['ParameterValue'] = trigger_queue_arn
 
         _logger.info('creating initial stacks')
         events_stack_name = self._create_stack('events', output_config)
@@ -88,13 +89,13 @@ class PartialEnvironmentCreateTool(DeploymentTool):
 
         _logger.info('updating configuration with new elb name')
         web_params = output_config['cloudformation_stacks']['web']['boto_args']['Parameters']
-        elb_name_param = self._get_element(web_params, 'ParameterKey', 'WebEcsServiceLoadBalancerName')
+        elb_name_param = _get_element(web_params, 'ParameterKey', 'WebEcsServiceLoadBalancerName')
         elb_name = elb_outputs[0]['OutputValue']
         elb_name_param['ParameterValue'] = elb_name
 
         _logger.info('updating configuration with new internal elb name')
         web_int_params = output_config['cloudformation_stacks']['web-internal']['boto_args']['Parameters']
-        elb_int_name_param = self._get_element(web_int_params, 'ParameterKey', 'WebEcsServiceLoadBalancerName')
+        elb_int_name_param = _get_element(web_int_params, 'ParameterKey', 'WebEcsServiceLoadBalancerName')
         elb_int_name = elb_int_outputs[0]['OutputValue']
         elb_int_name_param['ParameterValue'] = elb_int_name
 
@@ -128,8 +129,8 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         self._wait_for_stack_completion_and_get_outputs(web_internal_stack_name)
 
         _logger.info('waiting for web ecs service to stabilize')
-        cluster_name = self._get_element(web_outputs, 'OutputKey', 'EcsClusterResourceName')['OutputValue']
-        service_name = self._get_element(web_outputs, 'OutputKey', 'WebEcsServiceResourceName')['OutputValue']
+        cluster_name = _get_element(web_outputs, 'OutputKey', 'EcsClusterResourceName')['OutputValue']
+        service_name = _get_element(web_outputs, 'OutputKey', 'WebEcsServiceResourceName')['OutputValue']
         boto3.client('ecs').get_waiter('services_stable').wait(cluster=cluster_name, services=[service_name])
         _logger.info('done')
 
@@ -138,7 +139,7 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         time.sleep(5)
 
         _logger.info('initializing database schema')
-        dart_host = self._get_dart_host(output_config)
+        dart_host = _get_dart_host(output_config)
         response = requests.post('http://%s/admin/create_all' % dart_host)
         response.raise_for_status()
         time.sleep(5)
