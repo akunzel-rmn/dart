@@ -134,6 +134,8 @@ class GraphEntityService(object):
                     self._add_edge(edges, visited_edges, 'event', entity.data.args['event_id'], 'trigger', entity.id)
                 if entity.data.args and 'completed_workflow_id' in entity.data.args:
                     self._add_edge(edges, visited_edges, 'workflow', entity.data.args['completed_workflow_id'], 'trigger', entity.id)
+                if entity.data.args and 'failed_workflow_id' in entity.data.args:
+                    self._add_edge(edges, visited_edges, 'workflow', entity.data.args['failed_workflow_id'], 'trigger', entity.id)
                 if entity.data.args and 'subscription_id' in entity.data.args:
                     self._add_edge(edges, visited_edges, 'subscription', entity.data.args['subscription_id'], 'trigger', entity.id)
 

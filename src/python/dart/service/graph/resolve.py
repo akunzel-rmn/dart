@@ -182,6 +182,8 @@ class GraphEntityResolverService(object):
         assert isinstance(trigger, Trigger)
         if trigger.data.args and trigger.data.args.get('completed_workflow_id'):
             trigger.data.args['completed_workflow_id'] = self._resolve_and_save_workflow(trigger.data.args['completed_workflow_id'], entity_map, actual_entities_by_node_id, actual_entities_by_unsaved_id)
+        if trigger.data.args and trigger.data.args.get('failed_workflow_id'):
+            trigger.data.args['failed_workflow_id'] = self._resolve_and_save_workflow(trigger.data.args['failed_workflow_id'], entity_map, actual_entities_by_node_id, actual_entities_by_unsaved_id)
         if trigger.data.args and trigger.data.args.get('event_id'):
             trigger.data.args['event_id'] = self._resolve_and_save_event(trigger.data.args['event_id'], entity_map, actual_entities_by_node_id, actual_entities_by_unsaved_id)
         if trigger.data.args and trigger.data.args.get('subscription_id'):

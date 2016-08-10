@@ -1,7 +1,7 @@
 from dart.context.locator import injectable
 from dart.message.call import TriggerCall
 from dart.trigger.subscription import subscription_batch_trigger
-from dart.trigger.workflow import workflow_completion_trigger
+from dart.trigger.workflow import workflow_completion_trigger, workflow_failure_trigger
 from dart.trigger.super import super_trigger
 
 
@@ -27,6 +27,9 @@ class TriggerProxy(object):
 
     def trigger_workflow_completion(self, workflow_id):
         self.process_trigger(workflow_completion_trigger, {'workflow_id': workflow_id})
+
+    def trigger_workflow_failure(self, workflow_id):
+        self.process_trigger(workflow_failure_trigger, {'workflow_id': workflow_id})
 
     def trigger_subscription_evaluation(self, trigger_id):
         self.process_trigger(subscription_batch_trigger, {'trigger_id': trigger_id})

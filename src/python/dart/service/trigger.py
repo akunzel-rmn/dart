@@ -16,7 +16,7 @@ from dart.util.rand import random_id
 @injectable
 class TriggerService(object):
     def __init__(self, action_service, datastore_service, workflow_service, manual_trigger_processor,
-                 subscription_batch_trigger_processor, workflow_completion_trigger_processor,
+                 subscription_batch_trigger_processor, workflow_completion_trigger_processor, workflow_failure_trigger_processor,
                  event_trigger_processor, scheduled_trigger_processor, super_trigger_processor, filter_service):
         self._action_service = action_service
         self._datastore_service = datastore_service
@@ -24,6 +24,7 @@ class TriggerService(object):
         self._manual_trigger_processor = manual_trigger_processor
         self._subscription_batch_trigger_processor = subscription_batch_trigger_processor
         self._workflow_completion_trigger_processor = workflow_completion_trigger_processor
+        self._workflow_failure_trigger_processor = workflow_failure_trigger_processor
         self._event_trigger_processor = event_trigger_processor
         self._scheduled_trigger_processor = scheduled_trigger_processor
         self._super_trigger_processor = super_trigger_processor
@@ -33,6 +34,7 @@ class TriggerService(object):
             manual_trigger_processor.trigger_type().name: manual_trigger_processor,
             subscription_batch_trigger_processor.trigger_type().name: subscription_batch_trigger_processor,
             workflow_completion_trigger_processor.trigger_type().name: workflow_completion_trigger_processor,
+            workflow_failure_trigger_processor.trigger_type().name: workflow_failure_trigger_processor,
             event_trigger_processor.trigger_type().name: event_trigger_processor,
             scheduled_trigger_processor.trigger_type().name: scheduled_trigger_processor,
             super_trigger_processor.trigger_type().name: super_trigger_processor,

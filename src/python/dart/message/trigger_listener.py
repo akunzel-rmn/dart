@@ -124,6 +124,7 @@ class TriggerListener(object):
                         if wf.data.on_failure == WorkflowOnFailure.DEACTIVATE:
                             self._datastore_service.update_datastore_state(datastore, DatastoreState.INACTIVE)
                         callbacks.append(lambda: self._emailer.send_workflow_failed_email(wf, wfi))
+                        self._trigger_proxy.trigger_workflow_failure(wfid)
                     else:
                         self._datastore_service.update_datastore_state(datastore, DatastoreState.INACTIVE)
                 else:

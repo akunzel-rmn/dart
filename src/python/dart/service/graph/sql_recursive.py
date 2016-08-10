@@ -124,6 +124,13 @@ RECURSIVE_SQL = """
 
                     UNION ALL
 
+                    SELECT 'trigger', e.id, e.data ->> 'name', e.data ->> 'state', e.data ->> 'trigger_type_name', 'workflow', g.id, 'PARENT'
+                      FROM trigger e
+                     WHERE g.type = 'workflow'
+                       AND e.data #>> '{args,failed_workflow_id}' = g.id
+
+                    UNION ALL
+
                     -- ===============================================
                     --  handle trigger relationships
                     -- ===============================================
@@ -141,6 +148,15 @@ RECURSIVE_SQL = """
                       JOIN trigger t
                         ON t.id = g.id
                        AND t.data #>> '{args,completed_workflow_id}' = e.id
+                     WHERE g.type = 'trigger'
+
+                    UNION ALL
+
+                    SELECT 'workflow', e.id, e.data ->> 'name', e.data ->> 'state', NULL, 'trigger', g.id, 'CHILD'
+                      FROM workflow e
+                      JOIN trigger t
+                        ON t.id = g.id
+                       AND t.data #>> '{args,failed_workflow_id}' = e.id
                      WHERE g.type = 'trigger'
 
                     UNION ALL

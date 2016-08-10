@@ -14,7 +14,7 @@ from dart.trigger.event import event_trigger
 from dart.trigger.scheduled import scheduled_trigger
 from dart.trigger.subscription import subscription_batch_trigger
 from dart.trigger.super import super_trigger
-from dart.trigger.workflow import workflow_completion_trigger
+from dart.trigger.workflow import workflow_completion_trigger, workflow_failure_trigger
 
 
 def get_static_subgraphs_by_engine_name_all_engines_related_none(engine_names, graph_entity_service):
@@ -188,6 +188,27 @@ def _get_static_subgraphs_by_related_type(engine, graph_entity_service):
         SubGraph(
             name='workflow completion trigger',
             description='create a new workflow_completion trigger entity',
+            related_type=EntityType.workflow,
+            related_is_a=Relationship.PARENT,
+            graph=graph_entity_service.to_graph(None, entity_models),
+            entity_map=graph_entity_service.to_entity_map(entity_models),
+            icon='▼',
+        ),
+    ])
+
+    entity_models = graph_entity_service.to_entity_models_with_randomized_ids([
+        Trigger(id=Ref.trigger(1), data=TriggerData(
+            name='%s_trigger' % workflow_failure_trigger.name,
+            trigger_type_name=workflow_failure_trigger.name,
+            state=TriggerState.INACTIVE,
+            workflow_ids=[],
+            args={'failed_workflow_id': Ref.parent()}
+        ))
+    ])
+    sub_graph_map[EntityType.workflow].extend([
+        SubGraph(
+            name='workflow failure trigger',
+            description='create a new workflow_failure trigger entity',
             related_type=EntityType.workflow,
             related_is_a=Relationship.PARENT,
             graph=graph_entity_service.to_graph(None, entity_models),
