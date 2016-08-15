@@ -23,7 +23,6 @@ def post_dataset():
 
 @api_dataset_bp.route('/dataset/<dataset>', methods=['GET'])
 @fetch_model
-@accounting_track
 @jsonapi
 @login_required
 def get_dataset(dataset):
@@ -31,7 +30,6 @@ def get_dataset(dataset):
 
 
 @api_dataset_bp.route('/dataset/guess', methods=['GET'])
-@accounting_track
 @jsonapi
 def get_dataset_guess():
     s3_path = request.args.get('s3_path')
@@ -41,7 +39,6 @@ def get_dataset_guess():
 
 
 @api_dataset_bp.route('/dataset', methods=['GET'])
-@accounting_track
 @jsonapi
 @login_required
 def find_datasets():

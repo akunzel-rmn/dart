@@ -13,6 +13,7 @@ api_event_bp = Blueprint('api_event', __name__)
 
 
 @api_event_bp.route('/event', methods=['POST'])
+@accounting_track
 @jsonapi
 @login_required
 def post_event():

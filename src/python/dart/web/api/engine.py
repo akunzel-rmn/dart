@@ -20,6 +20,7 @@ api_engine_bp = Blueprint('api_engine', __name__)
 
 
 @api_engine_bp.route('/engine', methods=['POST'])
+@accounting_track
 @jsonapi
 @login_required
 def post_engine():
@@ -29,7 +30,6 @@ def post_engine():
 
 @api_engine_bp.route('/engine/<engine>', methods=['GET'])
 @fetch_model
-@accounting_track
 @jsonapi
 @login_required
 def get_engine(engine):
@@ -56,7 +56,6 @@ def get_engine(engine):
 
 
 @api_engine_bp.route('/engine', methods=['GET'])
-@accounting_track
 @jsonapi
 @login_required
 def find_engines():
