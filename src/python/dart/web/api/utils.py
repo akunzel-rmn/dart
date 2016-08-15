@@ -1,8 +1,12 @@
+from flask import session
 from dart.model.accounting import ActivityEntity, Accounting
 
 
 def generate_accounting_event(return_code, req):
-    user_id = 'anonymous'  # should be extracted from request once authentication is deployed.
+    user_id = session['user_id']
+    if not user_id:
+        user_id = 'anonymous'
+
     state = req.method  # GET/POST/PUT/PATCH/DELETE
 
     # E.g. /api/1/engine
