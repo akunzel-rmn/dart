@@ -1,18 +1,21 @@
+from flask import session
 from jsonschema import Draft4Validator
 from jsonschema.exceptions import best_match
+import logging
 
 from dart.model.exception import DartValidationException
 
+_logger = logging.getLogger(__name__)
 
 def apply_defaults(instance, schema):
     if not schema or not instance:
         return
+
     for prop, subschema in schema.get('properties', {}).iteritems():
         if subschema and 'default' in subschema and instance.get(prop) is None:
             instance[prop] = subschema['default']
         if prop in instance:
             apply_defaults(instance[prop], subschema)
-
 
 def default_and_validate(model, schema):
     instance = model.to_dict()
@@ -20,6 +23,18 @@ def default_and_validate(model, schema):
     errors = list(Draft4Validator(schema).iter_errors(instance))
     if len(errors) > 0:
         raise DartValidationException(str(best_match(errors)))
+
+    user_id = "anonymous"
+    if session["user_id"]:
+        user_id = session["user_id"]
+    else:
+        _logger.debug("No session['user_id'] found. using anonymous user id instead.")
+
+    if instance and ('data' in instance) and ("user_id" in instance["data"]):
+        instance['data']['user_id'] = user_id
+    else:
+        _logger.debug("instance['data']['user_id'] do not exist. Skipping setting a user_id.")
+
     return model.from_dict(instance)
 
 
