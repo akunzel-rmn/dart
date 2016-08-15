@@ -3,7 +3,6 @@ from dart.service.user import UserService
 from dart.auth.base_auth import BaseAuth
 from dart.model.user import User
 from flask import current_app, make_response, Blueprint, redirect, session
-from flask_login import current_user
 
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from urlparse import urlparse
@@ -51,8 +50,10 @@ class SamlAuth(BaseAuth):
         return user
 
     def handle_logout_request(self):
-        session.pop('user_id', None)
         user_service = current_app.dart_context.get(UserService)
+        current_user = user_service.get_user(session['user_id']) # throws exception if missing
+
+        session.pop('user_id', None)
         return user_service.logout_user(current_user)
 
 
