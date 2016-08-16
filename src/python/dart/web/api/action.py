@@ -2,7 +2,6 @@ import json
 
 from flask import Blueprint, request, current_app
 from flask.ext.jsontools import jsonapi
-from flask.ext.login import login_required
 from jsonpatch import JsonPatch
 
 from dart.message.trigger_proxy import TriggerProxy
@@ -12,7 +11,7 @@ from dart.service.action import ActionService
 from dart.service.datastore import DatastoreService
 from dart.service.filter import FilterService
 from dart.service.order_by import OrderByService
-from dart.web.api.entity_lookup import fetch_model, accounting_track
+from dart.web.api.entity_lookup import fetch_model, accounting_track, check_login
 
 api_action_bp = Blueprint('api_action', __name__)
 
@@ -21,7 +20,7 @@ api_action_bp = Blueprint('api_action', __name__)
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def post_datastore_actions(datastore):
     """ :type datastore: dart.model.datastore.Datastore """
     request_json = request.get_json()
@@ -45,7 +44,7 @@ def post_datastore_actions(datastore):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def post_workflow_actions(workflow):
     """ :type workflow: dart.model.workflow.Workflow """
     request_json = request.get_json()
@@ -67,7 +66,7 @@ def post_workflow_actions(workflow):
 
 @api_action_bp.route('/action', methods=['GET'])
 @jsonapi
-@login_required
+@check_login
 def get_datastore_actions():
     limit = int(request.args.get('limit', 20))
     offset = int(request.args.get('offset', 0))
@@ -92,7 +91,7 @@ def get_datastore_actions():
 @api_action_bp.route('/action/<action>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_action(action):
     return {'results': action.to_dict()}
 
@@ -101,7 +100,7 @@ def get_action(action):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def put_action(action):
     """ :type action: dart.model.action.Action """
     return update_action(action, Action.from_dict(request.get_json()))
@@ -111,7 +110,7 @@ def put_action(action):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def patch_action(action):
     """ :type action: dart.model.action.Action """
     p = JsonPatch(request.get_json())
@@ -141,7 +140,7 @@ def update_action(action, updated_action):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def delete_action(action):
     action_service().delete_action(action.id)
     return {'results': 'OK'}

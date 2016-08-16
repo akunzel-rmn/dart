@@ -5,7 +5,6 @@ import os
 import uuid
 
 from flask import Flask, jsonify
-from flask_login import LoginManager, login_required, logout_user, login_user, current_user, user_unauthorized
 
 from dart.config.config import configuration
 from dart.context.context import AppContext

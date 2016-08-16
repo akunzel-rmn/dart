@@ -1,10 +1,8 @@
-import json
 import hashlib
 import hmac
 
-from flask import Blueprint, request, current_app, make_response, redirect, flash, url_for, render_template
-from flask.ext.login import login_required, LoginManager, UserMixin, login_user, logout_user
-from urlparse import urlparse
+from flask import Blueprint, request, current_app, redirect, flash, url_for, render_template
+from flask.ext.login import LoginManager, login_user, logout_user
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 

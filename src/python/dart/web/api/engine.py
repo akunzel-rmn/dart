@@ -2,7 +2,6 @@ import json
 
 from flask import Blueprint, request, current_app
 from flask.ext.jsontools import jsonapi
-from flask.ext.login import login_required
 
 from dart.message.trigger_proxy import TriggerProxy
 from dart.model.action import ActionState
@@ -14,7 +13,7 @@ from dart.service.engine import EngineService
 from dart.service.filter import FilterService
 from dart.service.trigger import TriggerService
 from dart.service.workflow import WorkflowService
-from dart.web.api.entity_lookup import fetch_model, accounting_track
+from dart.web.api.entity_lookup import fetch_model, accounting_track, check_login
 
 api_engine_bp = Blueprint('api_engine', __name__)
 
@@ -22,7 +21,7 @@ api_engine_bp = Blueprint('api_engine', __name__)
 @api_engine_bp.route('/engine', methods=['POST'])
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def post_engine():
     engine = engine_service().save_engine(Engine.from_dict(request.get_json()))
     return {'results': engine.to_dict()}
@@ -31,7 +30,7 @@ def post_engine():
 @api_engine_bp.route('/engine/<engine>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_engine(engine):
     """
     This is the engine API
@@ -57,7 +56,7 @@ def get_engine(engine):
 
 @api_engine_bp.route('/engine', methods=['GET'])
 @jsonapi
-@login_required
+@check_login
 def find_engines():
     """
     This is the engine API
@@ -87,7 +86,7 @@ def find_engines():
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def put_engine(engine):
     js = request.get_json()
     engineFromJS = Engine.from_dict(js)
@@ -99,7 +98,7 @@ def put_engine(engine):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def action_checkout(action):
     """ :type action: dart.model.action.Action """
     results = validate_engine_action(action, ActionState.PENDING)
@@ -116,7 +115,7 @@ def action_checkout(action):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def action_checkin(action):
     """ :type action: dart.model.action.Action """
     results = validate_engine_action(action, ActionState.RUNNING)
@@ -156,7 +155,7 @@ def validate_engine_action(action, state):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def delete_engine(engine):
     engine_service().delete_engine(engine)
     return {'results': 'OK'}
@@ -166,7 +165,7 @@ def delete_engine(engine):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def post_subgraph_definition(engine):
     subgraph_definition = engine_service().save_subgraph_definition(
         SubGraphDefinition.from_dict(request.get_json()), engine, trigger_service().trigger_schemas()
@@ -177,7 +176,7 @@ def post_subgraph_definition(engine):
 @api_engine_bp.route('/subgraph_definition/<subgraph_definition>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_subgraph_definition(subgraph_definition):
     return {'results': subgraph_definition.to_dict()}
 
@@ -185,7 +184,7 @@ def get_subgraph_definition(subgraph_definition):
 @api_engine_bp.route('/engine/<engine>/subgraph_definition', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_subgraph_definitions(engine):
     return {'results': engine_service().get_subgraph_definitions(engine.data.name)}
 
@@ -194,7 +193,7 @@ def get_subgraph_definitions(engine):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def delete_subgraph_definition(subgraph_definition):
     engine_service().delete_subgraph_definition(subgraph_definition.id)
     return {'results': 'OK'}

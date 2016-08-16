@@ -1,6 +1,5 @@
 from flask import Blueprint, current_app, request
 from flask.ext.jsontools import jsonapi
-from flask.ext.login import login_required
 
 from dart.model.graph import GraphEntity, EntityType
 from dart.service.action import ActionService
@@ -8,14 +7,14 @@ from dart.service.datastore import DatastoreService
 from dart.service.graph.resolve import GraphEntityResolverService
 from dart.service.graph.entity import GraphEntityService
 from dart.service.workflow import WorkflowService
-from dart.web.api.entity_lookup import fetch_model, accounting_track
+from dart.web.api.entity_lookup import fetch_model, accounting_track, check_login
 
 api_graph_bp = Blueprint('api_graph', __name__)
 
 
 @api_graph_bp.route('/graph/entity_identifiers', methods=['GET'])
 @jsonapi
-@login_required
+@check_login
 def get_graph_entity_identifiers():
     search = request.args.get('search')
     if not search:
@@ -26,7 +25,7 @@ def get_graph_entity_identifiers():
 @api_graph_bp.route('/graph/action/<action>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_action(action):
     """ :type action: dart.model.action.Action """
     entity = GraphEntity('action', action.id, action.data.action_type_name, action.data.state)
@@ -36,7 +35,7 @@ def get_graph_from_action(action):
 @api_graph_bp.route('/graph/dataset/<dataset>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_dataset(dataset):
     """ :type dataset: dart.model.dataset.Dataset """
     entity = GraphEntity('dataset', dataset.id, dataset.data.name)
@@ -46,7 +45,7 @@ def get_graph_from_dataset(dataset):
 @api_graph_bp.route('/graph/datastore/<datastore>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_datastore(datastore):
     """ :type datastore: dart.model.datastore.Datastore """
     entity = GraphEntity('datastore', datastore.id, datastore.data.name, datastore.data.state)
@@ -56,7 +55,7 @@ def get_graph_from_datastore(datastore):
 @api_graph_bp.route('/graph/event/<event>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_event(event):
     """ :type event: dart.model.event.Event """
     entity = GraphEntity('event', event.id, event.data.name, event.data.state)
@@ -66,7 +65,7 @@ def get_graph_from_event(event):
 @api_graph_bp.route('/graph/subscription/<subscription>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_subscription(subscription):
     """ :type subscription: dart.model.subscription.Subscription """
     entity = GraphEntity('subscription', subscription.id, subscription.data.name, subscription.data.state)
@@ -76,7 +75,7 @@ def get_graph_from_subscription(subscription):
 @api_graph_bp.route('/graph/trigger/<trigger>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_trigger(trigger):
     """ :type trigger: dart.model.trigger.Trigger """
     entity = GraphEntity('trigger', trigger.id, trigger.data.name, trigger.data.state, trigger.data.trigger_type_name)
@@ -86,7 +85,7 @@ def get_graph_from_trigger(trigger):
 @api_graph_bp.route('/graph/workflow/<workflow>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_graph_from_workflow(workflow):
     """ :type workflow: dart.model.workflow.Workflow """
     entity = GraphEntity('workflow', workflow.id, workflow.data.name, workflow.data.state)
@@ -95,7 +94,7 @@ def get_graph_from_workflow(workflow):
 
 @api_graph_bp.route('/graph/sub_graph', methods=['GET'])
 @jsonapi
-@login_required
+@check_login
 def get_sub_graphs():
     related_type = request.args.get('related_type')
     related_id = request.args.get('related_id')
@@ -131,7 +130,7 @@ def get_sub_graphs():
 @api_graph_bp.route('/graph/sub_graph', methods=['POST'])
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def post_entity_map():
     results, error = graph_entity_resolver_service().save_entities(request.get_json(), request.args.get('debug'))
     if error:

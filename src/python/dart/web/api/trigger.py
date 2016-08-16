@@ -2,7 +2,6 @@ import json
 
 from flask import Blueprint, request, current_app
 from flask.ext.jsontools import jsonapi
-from flask.ext.login import login_required
 
 from jsonpatch import JsonPatch
 
@@ -10,7 +9,7 @@ from dart.model.trigger import Trigger
 from dart.service.filter import FilterService
 from dart.service.trigger import TriggerService
 from dart.service.workflow import WorkflowService
-from dart.web.api.entity_lookup import fetch_model, accounting_track
+from dart.web.api.entity_lookup import fetch_model, accounting_track, check_login
 
 
 api_trigger_bp = Blueprint('api_trigger', __name__)
@@ -20,7 +19,7 @@ api_trigger_bp = Blueprint('api_trigger', __name__)
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def post_trigger():
     trigger = Trigger.from_dict(request.get_json())
     return {'results': trigger_service().save_trigger(trigger).to_dict()}
@@ -29,14 +28,14 @@ def post_trigger():
 @api_trigger_bp.route('/trigger/<trigger>', methods=['GET'])
 @fetch_model
 @jsonapi
-@login_required
+@check_login
 def get_trigger(trigger):
     return {'results': trigger.to_dict()}
 
 
 @api_trigger_bp.route('/trigger', methods=['GET'])
 @jsonapi
-@login_required
+@check_login
 def find_triggers():
     limit = int(request.args.get('limit', 20))
     offset = int(request.args.get('offset', 0))
@@ -52,7 +51,7 @@ def find_triggers():
 
 @api_trigger_bp.route('/trigger_type', methods=['GET'])
 @jsonapi
-@login_required
+@check_login
 def get_trigger_types():
     limit = int(request.args.get('limit', 20))
     offset = int(request.args.get('offset', 0))
@@ -69,7 +68,7 @@ def get_trigger_types():
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def put_trigger(trigger):
     """ :type trigger: dart.model.trigger.Trigger """
     return update_trigger(trigger, Trigger.from_dict(request.get_json()))
@@ -79,7 +78,7 @@ def put_trigger(trigger):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def patch_trigger(trigger):
     """ :type trigger: dart.model.trigger.Trigger """
     p = JsonPatch(request.get_json())
@@ -106,7 +105,7 @@ def update_trigger(trigger, updated_trigger):
 @fetch_model
 @accounting_track
 @jsonapi
-@login_required
+@check_login
 def delete_trigger(trigger):
     trigger_service().delete_trigger(trigger.id)
     return {'results': 'OK'}
