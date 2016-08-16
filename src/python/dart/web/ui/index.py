@@ -8,3 +8,8 @@ index_bp = Blueprint('index', __name__)
 @login_required
 def index():
     return render_template('index.html')
+
+
+@index_bp.route('/info')
+def info():
+    return render_template('info.html')

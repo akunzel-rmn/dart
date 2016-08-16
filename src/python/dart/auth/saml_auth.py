@@ -50,11 +50,17 @@ class SamlAuth(BaseAuth):
         return user
 
     def handle_logout_request(self):
-        user_service = current_app.dart_context.get(UserService)
-        current_user = user_service.get_user(session['user_id']) # throws exception if missing
+        # In case we are logging out before we are logged in.
+        if session.get("user_id"):
+          user_service = current_app.dart_context.get(UserService)
+          current_user = user_service.get_user(session['user_id'], raise_when_missing=False) # Do not throw exception if missing
+          session.pop('user_id', None)
 
-        session.pop('user_id', None)
-        return user_service.logout_user(current_user)
+          #self.auth.process_slo()
+          if current_user:
+            return user_service.logout_user(current_user)
+
+        return None
 
 
 @SamlAuth.additional_endpoints.route('/metadata', methods=['GET'])

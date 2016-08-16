@@ -2,7 +2,7 @@ import json
 import hashlib
 import hmac
 
-from flask import Blueprint, request, current_app, make_response, redirect, flash, url_for
+from flask import Blueprint, request, current_app, make_response, redirect, flash, url_for, render_template
 from flask.ext.login import login_required, LoginManager, UserMixin, login_user, logout_user
 from urlparse import urlparse
 from datetime import datetime, timedelta
@@ -38,7 +38,7 @@ def logout():
     auth.handle_logout_request()
     logout_user()
     flash('logged out')
-    return redirect('/')
+    return render_template('info.html')
 
 @login_manager.user_loader
 def load_user(user_id):
