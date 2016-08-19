@@ -45,8 +45,9 @@ before_install:
   - cd src && PYTHONPATH=$PYTHONPATH:..:./python/ nosetests python/dart/test/accounting
 
 install:
+  - docker -v
   # install docker version DOCKER_VERSION
-  - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
+  #- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
   # kill travis postgres instance so we can use ours 
   - sudo /etc/init.d/postgresql stop
   # Build docker containers needed to run unit-tests against
