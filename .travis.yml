@@ -15,7 +15,11 @@ env:
   - COMPOSE_VERSION=1.7.1 DOCKER_VERSION=1.10.1-0~trusty
 
 before_install:
-  # get docker-compose COMPOSE_VERSION and override existing docker-compose
+  # libxmlsec1 is needed for installing python-saml.
+  - sudo apt-get update
+  - sudo apt-get install libxmlsec1-dev swig
+
+  # get docker-compose COMPOSE_VERSION and override existing docker-compose. Which works with our deployment.
   - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
